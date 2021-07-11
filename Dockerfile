@@ -4,3 +4,4 @@ COPY package*.json .
 RUN npm install --production
 COPY * .
 ENTRYPOINT [ "node", "index.js" ]
+VOLUME /pipes
