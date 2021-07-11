@@ -10,8 +10,9 @@ app.use(express.json());
 dotenv.config();
 const pipePath = process.env.PIPE_PATH || '/pipes/republish-pipe';
 const port = process.env.PORT || 8000;
+const secret = process.env.SECRET || '';
 
-app.post("/", async (req, res) => {
+app.post(`/${secret}`, async (req, res) => {
   const callback_url = req.body.callback_url;
   await fs.appendFile(pipePath, 'go');
   res.status(202).send("Accepted").end();
