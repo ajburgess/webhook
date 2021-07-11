@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { spawn } = require('child_process');
-const fs = require('fs').promises;
+const fs = require('fs');
 const dotenv = require('dotenv');
 
 const app = express();
@@ -13,15 +13,25 @@ const port = process.env.PORT || 8000;
 const secret = process.env.SECRET || '';
 
 app.post(`/${secret}`, async (req, res) => {
+  console.log("Webhook called");
   const callback_url = req.body.callback_url;
-  await fs.appendFile(pipePath, 'go');
   res.status(202).send("Accepted").end();
 
+  let success = true;
   try {
-    await axios.post(callback_url, {
-      state: 'success',
-      description: 'Initiated redployment of latest docker hub images'
-    });
+    const wstream = fs.createWriteStream(pipePath)
+    await wstream.write('go\r\n');
+    await wstream.close();
+    console.log(`Republish request written to pipe ${pipePath}`);
+  } catch (error) {
+    console.error(`Error writing to pipe ${pipePath}`)
+    console.error(error.message);
+    success = false;
+  }
+
+  try {
+    await axios.post(callback_url, { state: success ? 'success' : 'failure' });
+    console.log(`Callback posted to ${callback_url}`);
   } catch (error) {
     console.error(`Error calling callback ${callback_url}`);
     console.error(error.message);
